@@ -54,15 +54,15 @@ bool inBounds(int row, int col)
 int findNeighbours(int r, int c, int directions[], float nei[]) {
     int cont = 0;
     
-    if(inBounds(c-1, r+0) != false) {cont++; directions[0] = 1; nei[0] = rewards[c-1][r]->fValue;} //UP
-    if(inBounds(c-1, r+1) != false) {cont++; directions[1] = 1; nei[1] = rewards[c-1][r+1]->fValue;} //RU
-    if(inBounds(c+0, r+1) != false) {cont++; directions[2] = 1; nei[2] = rewards[c][r+1]->fValue;} //R
-    if(inBounds(c+1, r+1) != false) {cont++; directions[3] = 1; nei[3] = rewards[c+1][r+1]->fValue;} //RD
-    if(inBounds(c+1, r+0) != false) {cont++; directions[4] = 1; nei[4] = rewards[c+1][r]->fValue;} //D
-    if(inBounds(c+1, r-1) != false) {cont++; directions[5] = 1; nei[5] = rewards[c+1][r-1]->fValue;} //LD
-    if(inBounds(c+0, r-1) != false) {cont++; directions[6] = 1; nei[6] = rewards[c][r-1]->fValue;} //L
-    if(inBounds(c-1, r-1) != false) {cont++; directions[7] = 1; nei[7] = rewards[c-1][r-1]->fValue;} //LU
-    nei[8] = rewards[c][r]->fValue;
+    if(inBounds(r,c+1) != false) {cont++; directions[0] = 1; nei[0] = rewards[r][c+1]->fValue;} //RR
+    if(inBounds(r-1,c+1) != false) {cont++; directions[1] = 1; nei[1] = rewards[r-1][c+1]->fValue;} //UR
+    if(inBounds(r-1,c) != false) {cont++; directions[2] = 1; nei[2] = rewards[r-1][c]->fValue;} //UU
+    if(inBounds(r-1,c-1) != false) {cont++; directions[3] = 1; nei[3] = rewards[r-1][c-1]->fValue;} //UL
+    if(inBounds(r,c-1) != false) {cont++; directions[4] = 1; nei[4] = rewards[r][c-1]->fValue;} //LL
+    if(inBounds(r+1,c-1) != false) {cont++; directions[5] = 1; nei[5] = rewards[r+1][c-1]->fValue;} //DL
+    if(inBounds(r+1,c) != false) {cont++; directions[6] = 1; nei[6] = rewards[r+1][c]->fValue;} //DD
+    if(inBounds(r+1,c+1) != false) {cont++; directions[7] = 1; nei[7] = rewards[r+1][c+1]->fValue;} //DR
+    nei[8] = rewards[r][c]->fValue;
     
     return cont;
 }
@@ -77,9 +77,8 @@ int findPosition(vector<float> values, float max){
 }
 
 
-void calculateValues(int directions[], float nei[], float div, int index, float max) {
+void calculateValues(vector<float> values, int directions[], float nei[], float div, int r, int c) {
     
-    std::vector<float> values{-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f};
     int cont = 0;
     
     for (int i = 0; i < 9; i++) {
@@ -112,27 +111,39 @@ void calculateValues(int directions[], float nei[], float div, int index, float 
         values[cont] = sum;
         cont++;
     }
-    max = *max_element(values.begin(), values.end());
-    index = findPosition(values, max);
+    float max = *max_element(values.begin(), values.end());
+    int index = findPosition(values, max);
+    
+    currValues[r][c]->fValue = max;
+    currPolicy[r][c]->iValue = index;
 }
 
 // Perform the Value Iteration using the Bellman equation:
-void valueIteration()
+bool valueIteration()
 {
-    for (int i=0; i < MDP_WIDTH; i++) {
-        for (int j=0; j < MDP_HEIGHT; j++) {
+    float total =  0;
+    
+    for (int i=0; i < MDP_HEIGHT; i++) {
+        for (int j=0; j < MDP_WIDTH; j++) {
             
             int directions[9] = {0,0,0,0,0,0,0,0,1};
             float neighbour[9] ={0,0,0,0,0,0,0,0,0};
+            vector<float> values{-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f};
             
             int found = findNeighbours(i,j, directions, neighbour);
             float div = residium / (found+1);
             
-            int index = 0;
-            float max = 0;
+            calculateValues(values, directions, neighbour, div, i, j);
             
-            calculateValues(directions, neighbour, div, index, max);
+            total += prevValues[i][j]->fValue - currValues[i][j]->fValue;
         }
+    }
+    
+    if(total == 0) {
+        return true;
+    }else {
+        
+        return false;
     }
 }
 
@@ -214,16 +225,17 @@ int main()
     copyTable(currPolicy, prevPolicy);                        // Update the previous policy
 
     showIteration();
-    valueIteration();
-    /*
-        ToDo:
-        while(!convergence)
-        {
-            valueIteration();
-            iteration++;
-            showIteration();
-        }
-    */
+    bool convergence = false;
+    
+    while(!convergence)
+    {
+        convergence = valueIteration();
+        iteration++;
+        showIteration();
+        
+        copyTable(currValues, prevValues);
+        copyTable(currPolicy, prevPolicy);
+    }
     clean();
     return 0;
 }
