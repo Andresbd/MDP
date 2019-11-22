@@ -80,11 +80,11 @@ int findPosition(vector<float> values, float max){
 void calculateValues(int directions[], float nei[], float div, int index, float max) {
     
     std::vector<float> values{-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f};
+    int cont = 0;
     
     for (int i = 0; i < 9; i++) {
         
         bool stay = false;
-        int cont = 0;
         float sum = 0;
         
         for (int j = 0; j < 9; j++) {
@@ -114,8 +114,6 @@ void calculateValues(int directions[], float nei[], float div, int index, float 
     }
     max = *max_element(values.begin(), values.end());
     index = findPosition(values, max);
-    
-    cout << index;
 }
 
 // Perform the Value Iteration using the Bellman equation:
@@ -130,8 +128,8 @@ void valueIteration()
             int found = findNeighbours(i,j, directions, neighbour);
             float div = residium / (found+1);
             
-            int index;
-            float max;
+            int index = 0;
+            float max = 0;
             
             calculateValues(directions, neighbour, div, index, max);
         }
