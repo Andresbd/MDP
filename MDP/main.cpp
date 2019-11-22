@@ -12,8 +12,8 @@
 #include <iterator>
 #include "cCell.hpp"
 
-#define MDP_WIDTH 3
-#define MDP_HEIGHT 2
+#define MDP_WIDTH 15
+#define MDP_HEIGHT 10
 #define GAMMA 0.9
 
 using namespace std;
@@ -33,6 +33,7 @@ unsigned int iteration;
 // Copy table src to dst
 void copyTable(Cell*** src, Cell*** dst)
 {
+//   Copy Src to Destiny
     if(dst != NULL) delete dst;
     dst = new Cell**[MDP_HEIGHT];
     for(int r = 0; r < MDP_HEIGHT; r++)
@@ -44,6 +45,8 @@ void copyTable(Cell*** src, Cell*** dst)
         }
     }
 }
+
+
 
 // Determine if [row, col] is inside the state set:
 bool inBounds(int row, int col)
@@ -77,7 +80,7 @@ int findPosition(vector<float> values, float max){
 }
 
 
-void calculateValues(vector<float> values, int directions[], float nei[], float div, int r, int c) {
+void calculateValues(vector<float> values, int directions[], float nei[], float* max, int* index, float* div) {
     
     int cont = 0;
     
@@ -103,7 +106,7 @@ void calculateValues(vector<float> values, int directions[], float nei[], float 
                     if(directions[j] == 0)  {
                         continue;
                     }else {
-                        sum += div * nei[j];
+                        sum += *div * nei[j];
                     }
                 }
             }
@@ -111,17 +114,15 @@ void calculateValues(vector<float> values, int directions[], float nei[], float 
         values[cont] = sum;
         cont++;
     }
-    float max = *max_element(values.begin(), values.end());
-    int index = findPosition(values, max);
     
-    currValues[r][c]->fValue = max;
-    currPolicy[r][c]->iValue = index;
+    *max = *max_element(values.begin(), values.end());
+    *index = findPosition(values, *max);
 }
 
 // Perform the Value Iteration using the Bellman equation:
 bool valueIteration()
 {
-    float total =  0;
+    float total = 0;
     
     for (int i=0; i < MDP_HEIGHT; i++) {
         for (int j=0; j < MDP_WIDTH; j++) {
@@ -133,16 +134,22 @@ bool valueIteration()
             int found = findNeighbours(i,j, directions, neighbour);
             float div = residium / (found+1);
             
-            calculateValues(values, directions, neighbour, div, i, j);
+            int  index;
+            float max;
             
-            total += prevValues[i][j]->fValue - currValues[i][j]->fValue;
+//            calculateValues(values, directions, neighbour, &max, &index, &div);
+            
+            
+            currValues[i][j]->fValue = prevValues[i][j]->fValue + 0.8 * max;
+            currPolicy[i][j]->iValue = index;
+            
+            total += prevPolicy[i][j]->iValue - currPolicy[i][j]->iValue;
         }
     }
     
     if(total == 0) {
         return true;
     }else {
-        
         return false;
     }
 }
@@ -218,8 +225,21 @@ int main()
         }
     }
 
-    rewards[0][1]->fValue = -10.0f;                            // Penalty for an obstacle
-    rewards[0][2]->fValue = +10.0f;                            // Reward for the goal
+    rewards[2][1]->fValue = -10.0f;                            // Penalty for an obstacle
+    rewards[2][3]->fValue = -10.0f;                            // Penalty for an obstacle
+    rewards[2][5]->fValue = -10.0f;                            // Penalty for an obstacle
+    rewards[2][7]->fValue = -10.0f;                            // Penalty for an obstacle
+    rewards[2][9]->fValue = -10.0f;                            // Penalty for an obstacle
+    rewards[5][0]->fValue = -10.0f;
+    rewards[5][2]->fValue = -10.0f;
+    rewards[5][4]->fValue = -10.0f;
+    rewards[5][6]->fValue = -10.0f;
+    rewards[5][8]->fValue = -10.0f;
+    rewards[9][1]->fValue = -10.0f;
+    rewards[9][3]->fValue = -10.0f;
+    rewards[9][5]->fValue = -10.0f;
+    rewards[0][14]->fValue = +10.0f;                            // Reward for the goal
+    rewards[9][9]->fValue = +10.0f;                            // Reward for the goal
 
     copyTable(currValues, prevValues);                        // Update the previous values
     copyTable(currPolicy, prevPolicy);                        // Update the previous policy
@@ -229,12 +249,14 @@ int main()
     
     while(!convergence)
     {
+        copyTable(currValues, prevValues);
+        copyTable(currPolicy, prevPolicy);
+        
+        cout << prevValues[0][0]->fValue;
+        
         convergence = valueIteration();
         iteration++;
         showIteration();
-        
-        copyTable(currValues, prevValues);
-        copyTable(currPolicy, prevPolicy);
     }
     clean();
     return 0;
