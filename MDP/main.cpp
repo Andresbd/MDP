@@ -67,6 +67,16 @@ int findNeighbours(int r, int c, int directions[], float nei[]) {
     return cont;
 }
 
+int findPosition(vector<float> values, float max){
+    for (int i = 0; i< values.size(); i++) {
+        if(values[i] == max){
+            return i;
+        }
+    }
+    return 0;
+}
+
+
 void calculateValues(int directions[], float nei[], float div, int index, float max) {
     
     std::vector<float> values{-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f,-20.0f};
@@ -103,7 +113,7 @@ void calculateValues(int directions[], float nei[], float div, int index, float 
         cont++;
     }
     max = *max_element(values.begin(), values.end());
-    index = *distance(values, max);
+    index = findPosition(values, max);
     
     cout << index;
 }
