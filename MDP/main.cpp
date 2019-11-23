@@ -10,7 +10,7 @@
 #include <sstream>
 #include <algorithm>
 #include <iterator>
-#include "cCell.h"
+#include "cCell.hpp"
 #define MDP_WIDTH 15
 #define MDP_HEIGHT 10
 #define PROB 0.9
