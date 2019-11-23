@@ -10,9 +10,10 @@
 #include <sstream>
 #include <algorithm>
 #include <iterator>
+#include <fstream>
 #include "cCell.hpp"
-#define MDP_WIDTH 15
-#define MDP_HEIGHT 10
+#define MDP_WIDTH 5
+#define MDP_HEIGHT 6
 #define PROB 0.9
 #define GAMMA 0.8
 
@@ -134,7 +135,7 @@ bool valueIteration()
 		{
 			int positions[9] = {0,0,0,0,0,0,0,0,1};
 			float nFvalues[9] = { 0,0,0,0,0,0,0,0,0};
-			float results[9] = { -20,-20,-20,-20,-20,-20,-20,-20,-20 };
+			float results[9] = { 0,0,0,0,0,0,0,0,0 };
 
 			int neighbours = findNeighbours(r,c,positions,nFvalues);
 
@@ -200,6 +201,29 @@ void clean()
 	cout << endl << "All clean. Bye." << endl;
 }
 
+void readTxt() {
+	std::ifstream in("board.txt");
+	std::stringstream buffer;
+	buffer << in.rdbuf();
+	std::string test = buffer.str();
+	std::cout << test << std::endl << std::endl;
+
+	//create variables that will act as "cursors". we'll take everything between them.
+	size_t pos1 = 0;
+	size_t pos2;
+
+	for (int r = 0; r < MDP_HEIGHT; r++) {
+		for (int c = 0; c < MDP_WIDTH; c++) {
+			pos2 = test.find(",", pos1); //search for the bar "|". pos2 will be where the bar was found.
+			rewards[r][c]->fValue = stof(test.substr(pos1, (pos2 - pos1))); //make a substring, wich is nothing more 
+												  //than a copy of a fragment of the big string.
+			std::cout << rewards[r][c] << std::endl;
+			std::cout << "pos1:" << pos1 << ", pos2:" << pos2 << std::endl;
+			pos1 = pos2 + 1;
+		}
+	}
+}
+
 // Compute the MDP solution (don't forget to write a file with the optimal policy):
 int main()
 {
@@ -221,10 +245,6 @@ int main()
 			currValues[r][c] = new Cell(Cell::CT_VALUE);	// Instance of the value cell
 			currValues[r][c]->row = r;
 			currValues[r][c]->column = c;
-			prevValues[r][c] = new Cell(Cell::CT_VALUE);	// Instance of the value cell
-			prevValues[r][c]->row = r;
-			prevValues[r][c]->column = c;
-			prevValues[r][c]->fValue = -0.03f;
 			currPolicy[r][c] = new Cell(Cell::CT_POLICY);	// Instance of the policy cell
 			currPolicy[r][c]->row = r;
 			currPolicy[r][c]->column = c;
@@ -238,26 +258,11 @@ int main()
 		}
 	}
 
-	rewards[2][1]->fValue = -10.0f;                            // Penalty for an obstacle
-	rewards[2][3]->fValue = -10.0f;                            // Penalty for an obstacle
-	rewards[2][5]->fValue = -10.0f;                            // Penalty for an obstacle
-	rewards[2][7]->fValue = -10.0f;                            // Penalty for an obstacle
-	rewards[2][9]->fValue = -10.0f;                            // Penalty for an obstacle
-	rewards[5][0]->fValue = -10.0f;
-	rewards[5][2]->fValue = -10.0f;
-	rewards[5][4]->fValue = -10.0f;
-	rewards[5][6]->fValue = -10.0f;
-	rewards[5][8]->fValue = -10.0f;
-	rewards[9][1]->fValue = -10.0f;
-	rewards[9][3]->fValue = -10.0f;
-	rewards[9][5]->fValue = -10.0f;
-
-	rewards[0][14]->fValue = +10.0f;                            // Reward for the goal
-	rewards[9][9]->fValue = +10.0f;                            // Reward for the goal
+	readTxt();
 
 	copyTable(rewards, prevValues);
 
-	//showIteration();
+	showIteration();
 	
 	bool convergence = false;
 	
