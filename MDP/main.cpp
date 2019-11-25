@@ -12,8 +12,8 @@
 #include <iterator>
 #include <fstream>
 #include "cCell.hpp"
-#define MDP_WIDTH 5
-#define MDP_HEIGHT 6
+#define MDP_WIDTH 15
+#define MDP_HEIGHT 10
 #define PROB 0.9
 #define GAMMA 0.8
 
@@ -67,7 +67,7 @@ int findNeighbours(int r, int c, int positions[], float nFvalues[]) {
 	} //DD
 	if (inBounds(r + 1, c + 1) != false) { cont++; positions[7] = 1; nFvalues[7] = prevValues[r+1][c + 1]->fValue;
 	} //DR
-	nFvalues[8] = prevPolicy[r][c]->fValue;
+	nFvalues[8] = prevValues[r][c]->fValue;
 
 	return cont;
 }
@@ -148,7 +148,7 @@ bool valueIteration()
 			currValues[r][c]->fValue = prevValues[r][c]->fValue + GAMMA * max;
 			currPolicy[r][c]->iValue = index;
 
-			total += prevPolicy[r][c]->iValue - currPolicy[r][c]->iValue;
+			total += currPolicy[r][c]->iValue - prevPolicy[r][c]->iValue;
 		}
 	}
 
@@ -202,26 +202,39 @@ void clean()
 }
 
 void readTxt() {
-	std::ifstream in("board.txt");
-	std::stringstream buffer;
-	buffer << in.rdbuf();
-	std::string test = buffer.str();
-	std::cout << test << std::endl << std::endl;
+    ifstream in;
+    in.open("/Users/andresbustamante/Documents/Sistemas/MDP/MDP/Board.txt");
+    if (!in) {
+        cerr << "Unable to open file board.txt \n";
+        exit(1);   // call system to stop
+    }
+    stringstream buffer;
+    buffer << in.rdbuf();
+    string test = buffer.str();
 
-	//create variables that will act as "cursors". we'll take everything between them.
-	size_t pos1 = 0;
-	size_t pos2;
+    //create variables that will act as "cursors". we'll take everything between them.
+    size_t pos1 = 0;
+    size_t pos2;
 
-	for (int r = 0; r < MDP_HEIGHT; r++) {
-		for (int c = 0; c < MDP_WIDTH; c++) {
-			pos2 = test.find(",", pos1); //search for the bar "|". pos2 will be where the bar was found.
-			rewards[r][c]->fValue = stof(test.substr(pos1, (pos2 - pos1))); //make a substring, wich is nothing more 
-												  //than a copy of a fragment of the big string.
-			std::cout << rewards[r][c] << std::endl;
-			std::cout << "pos1:" << pos1 << ", pos2:" << pos2 << std::endl;
-			pos1 = pos2 + 1;
-		}
-	}
+    for (int r = 0; r < MDP_HEIGHT; r++) {
+        for (int c = 0; c < MDP_WIDTH; c++) {
+            pos2 = test.find(",", pos1); //search for the bar "|". pos2 will be where the bar was found.
+            rewards[r][c]->fValue = stof(test.substr(pos1, (pos2 - pos1))); //make a substring, wich is nothing more
+                                                  //than a copy of a fragment of the big string.
+            pos1 = pos2 + 1;
+        }
+    }
+}
+
+void writeTxt() {
+    ofstream out ("/Users/andresbustamante/Documents/Sistemas/MDP/MDP/Policy.txt");
+    
+    for (int r = 0; r < MDP_HEIGHT; r++) {
+        for (int c = 0; c < MDP_WIDTH; c++) {
+            out << currPolicy[r][c]->iValue << ",";
+        }
+        out << "\n";
+    }
 }
 
 // Compute the MDP solution (don't forget to write a file with the optimal policy):
@@ -248,34 +261,34 @@ int main()
 			currPolicy[r][c] = new Cell(Cell::CT_POLICY);	// Instance of the policy cell
 			currPolicy[r][c]->row = r;
 			currPolicy[r][c]->column = c;
-			prevPolicy[r][c] = new Cell(Cell::CT_POLICY);	// Instance of the policy cell
-			prevPolicy[r][c]->row = r;
-			prevPolicy[r][c]->column = c;
 			rewards[r][c] = new Cell(Cell::CT_REWARD);		// Instance of the rewards cell
 			rewards[r][c]->row = r;
 			rewards[r][c]->column = c;
-			rewards[r][c]->fValue = -0.04f;					// Default cost for just moving
 		}
 	}
 
 	readTxt();
-
-	copyTable(rewards, prevValues);
-
-	showIteration();
-	
+    copyTable(rewards, prevValues);
+    copyTable(currPolicy, prevPolicy);
+    showIteration();
+    
 	bool convergence = false;
 	
 		ToDo:
 		while(!convergence)
 		{
+            
 			convergence = valueIteration();
 			iteration++;
-			showIteration();
-
-			copyTable(currValues, prevValues);
-			copyTable(currPolicy, prevPolicy);
+            
+            showIteration();
+            
+            copyTable(currValues, prevValues);
+            copyTable(currPolicy, prevPolicy);
+            
 		}
+    
+    writeTxt();
 	
 	clean();
 	return 0;
