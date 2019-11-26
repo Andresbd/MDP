@@ -12,8 +12,8 @@
 #include <iterator>
 #include <fstream>
 #include "cCell.hpp"
-#define MDP_WIDTH 15
-#define MDP_HEIGHT 10
+#define MDP_WIDTH 100
+#define MDP_HEIGHT 100
 #define PROB 0.9
 #define GAMMA 0.8
 
@@ -104,7 +104,7 @@ void calculateValues(int positions[], float nFvalues[], float results[], int* in
 				if (j == 8 && stay == true)
 				{
 					stay = false;
-					sum += PROB * nFvalues[j];
+                    sum += -20;
 				}
 				else {
 					if (positions[j] == 0) {
@@ -140,12 +140,12 @@ bool valueIteration()
 			int neighbours = findNeighbours(r,c,positions,nFvalues);
 
 			int index = 0;
-			float max = 0;
-			float div = difference / (neighbours + 1);
+			float max = -100;
+			float div = difference / (neighbours);
 
 			calculateValues(positions, nFvalues, results, &index, &max, &div);
 
-			currValues[r][c]->fValue = prevValues[r][c]->fValue + GAMMA * max;
+			currValues[r][c]->fValue = rewards[r][c]->fValue + GAMMA * max;
 			currPolicy[r][c]->iValue = index;
 
 			total += currPolicy[r][c]->iValue - prevPolicy[r][c]->iValue;
@@ -203,7 +203,7 @@ void clean()
 
 void readTxt() {
     ifstream in;
-    in.open("/Users/andresbustamante/Documents/Sistemas/MDP/MDP/Board.txt");
+    in.open("/Users/andresbustamante/Documents/Sistemas/MDP/MDP/FinalBoard.csv");
     if (!in) {
         cerr << "Unable to open file board.txt \n";
         exit(1);   // call system to stop
@@ -219,7 +219,11 @@ void readTxt() {
     for (int r = 0; r < MDP_HEIGHT; r++) {
         for (int c = 0; c < MDP_WIDTH; c++) {
             pos2 = test.find(",", pos1); //search for the bar "|". pos2 will be where the bar was found.
-            rewards[r][c]->fValue = stof(test.substr(pos1, (pos2 - pos1))); //make a substring, wich is nothing more
+            string temp = test.substr(pos1, pos2 - pos1);
+            
+            
+            
+            rewards[r][c]->fValue = stof(temp); //make a substring, wich is nothing more
                                                   //than a copy of a fragment of the big string.
             pos1 = pos2 + 1;
         }
